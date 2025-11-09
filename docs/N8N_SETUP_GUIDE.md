@@ -1,6 +1,7 @@
 # Email Signature Sending Setup Guide with n8n
 
 ## 📋 Table of Contents
+
 1. [Prerequisites](#prerequisites)
 2. [Installing n8n on Your Server](#installing-n8n-on-your-server)
 3. [Setting Up Email Service](#setting-up-email-service)
@@ -15,6 +16,7 @@
 ## 1. Prerequisites
 
 Before starting, ensure you have:
+
 - ✅ A server (VPS) with root/sudo access (Ubuntu 20.04+ recommended)
 - ✅ Node.js 18+ installed
 - ✅ A domain name (optional but recommended)
@@ -149,6 +151,7 @@ sudo certbot --nginx -d n8n.yourdomain.com
 ### Option C: Using Your Own SMTP Server
 
 You'll need:
+
 - SMTP Host (e.g., `mail.yourdomain.com`)
 - SMTP Port (usually 587 for TLS or 465 for SSL)
 - Username
@@ -173,6 +176,7 @@ You'll need:
 1. Click the **"+"** button
 2. Search for **"Webhook"**
 3. Configure the webhook:
+
    - **HTTP Method**: `POST`
    - **Path**: `email-signature`
    - **Response Mode**: `Respond Immediately`
@@ -195,10 +199,10 @@ const userName = $input.first().json.userName;
 const imageData = $input.first().json.imageData;
 
 // Remove data URL prefix if present
-const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
 
 // Convert base64 to buffer for attachment
-const buffer = Buffer.from(base64Data, 'base64');
+const buffer = Buffer.from(base64Data, "base64");
 
 return {
   json: {
@@ -237,15 +241,19 @@ return {
         </body>
       </html>
     `,
-    fileName: `${userName.toLowerCase().replace(/\s+/g, '_')}_email_signature.png`
+    fileName: `${userName
+      .toLowerCase()
+      .replace(/\s+/g, "_")}_email_signature.png`,
   },
   binary: {
     data: {
-      data: buffer.toString('base64'),
-      mimeType: 'image/png',
-      fileName: `${userName.toLowerCase().replace(/\s+/g, '_')}_email_signature.png`
-    }
-  }
+      data: buffer.toString("base64"),
+      mimeType: "image/png",
+      fileName: `${userName
+        .toLowerCase()
+        .replace(/\s+/g, "_")}_email_signature.png`,
+    },
+  },
 };
 ```
 
@@ -263,7 +271,7 @@ return {
    - **Subject**: `={{ $json.subject }}`
    - **Email Type**: `HTML`
    - **Message**: `={{ $json.emailBody }}`
-   - **Attachments**: 
+   - **Attachments**:
      - Property Name: `data`
      - Add Options → Enable **Binary Property**
 
@@ -279,7 +287,7 @@ return {
    - **Subject**: `={{ $json.subject }}`
    - **Content**: `={{ $json.emailBody }}`
    - **Content Type**: `text/html`
-   - **Attachments**: 
+   - **Attachments**:
      - Content: `={{ $binary.data.data }}`
      - Filename: `={{ $json.fileName }}`
      - Type: `image/png`
@@ -297,6 +305,7 @@ return {
 ### Step 6: Connect the Nodes
 
 Connect them in this order:
+
 ```
 Webhook → Process Image Data → Send Email
 ```
@@ -350,58 +359,64 @@ Replace the "Send to Email" button handler with this code:
 ```typescript
 // Send to Email Button Handler (UPDATED)
 if (sendEmailBtn) {
-  sendEmailBtn.addEventListener('click', async () => {
+  sendEmailBtn.addEventListener("click", async () => {
     const dataUrl = await generateSignatureImage(sendEmailBtn);
-    
+
     if (!dataUrl) return;
 
     // Get the user's email and name from the form
-    const emailElement = document.querySelector('[data-field="email"]') as HTMLElement | null;
-    const userEmail = emailElement?.textContent?.trim() || '';
-    
-    const nameElement = document.querySelector('[data-field="name"]') as HTMLElement | null;
-    const userName = nameElement?.textContent?.trim() || 'User';
+    const emailElement = document.querySelector(
+      '[data-field="email"]'
+    ) as HTMLElement | null;
+    const userEmail = emailElement?.textContent?.trim() || "";
+
+    const nameElement = document.querySelector(
+      '[data-field="name"]'
+    ) as HTMLElement | null;
+    const userName = nameElement?.textContent?.trim() || "User";
 
     if (!userEmail) {
-      alert('Please enter an email address in the form.');
+      alert("Please enter an email address in the form.");
       return;
     }
 
     // Show loading state
     const originalHTML = sendEmailBtn.innerHTML;
-    sendEmailBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i> Sending...';
+    sendEmailBtn.innerHTML =
+      '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i> Sending...';
     sendEmailBtn.disabled = true;
 
     try {
       // Send to n8n webhook
       const response = await fetch(import.meta.env.PUBLIC_N8N_WEBHOOK_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.PUBLIC_N8N_AUTH_TOKEN}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.PUBLIC_N8N_AUTH_TOKEN}`,
         },
         body: JSON.stringify({
           email: userEmail,
           userName: userName,
-          imageData: dataUrl
-        })
+          imageData: dataUrl,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        throw new Error("Failed to send email");
       }
 
       // Show success message
-      sendEmailBtn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> Sent!';
-      
+      sendEmailBtn.innerHTML =
+        '<i data-lucide="check" class="w-5 h-5"></i> Sent!';
+
       // Update dialog with email and show it
       if (sentToEmailSpan) {
         sentToEmailSpan.textContent = userEmail;
       }
-      
+
       if (emailDialog) {
-        emailDialog.style.display = 'flex';
-        
+        emailDialog.style.display = "flex";
+
         // Re-initialize lucide icons in the dialog
         if (window.lucide) {
           window.lucide.createIcons();
@@ -416,10 +431,11 @@ if (sendEmailBtn) {
           window.lucide.createIcons();
         }
       }, 3000);
-
     } catch (error) {
-      console.error('Error sending email:', error);
-      alert('Failed to send email. Please try again or download the image instead.');
+      console.error("Error sending email:", error);
+      alert(
+        "Failed to send email. Please try again or download the image instead."
+      );
       sendEmailBtn.innerHTML = originalHTML;
       sendEmailBtn.disabled = false;
       if (window.lucide) {
@@ -469,10 +485,13 @@ if (sendEmailBtn) {
 ### Common Issues and Solutions
 
 #### ❌ "Webhook not found" Error
+
 **Solution**: Make sure the workflow is active (toggle switch is ON)
 
 #### ❌ Email not received
+
 **Solutions**:
+
 - Check spam/junk folder
 - Verify email credentials in n8n
 - Check n8n execution logs for errors
@@ -480,9 +499,11 @@ if (sendEmailBtn) {
 - For SendGrid: Verify API key has sending permissions
 
 #### ❌ CORS Error in Browser
+
 **Solution**: Add CORS headers to your webhook response:
 
 In the Webhook node, under "Options" → "Response Headers":
+
 ```json
 {
   "Access-Control-Allow-Origin": "*",
@@ -492,6 +513,7 @@ In the Webhook node, under "Options" → "Response Headers":
 ```
 
 #### ❌ Image too large (413 Payload Too Large)
+
 **Solution**: Increase Nginx body size limit:
 
 ```bash
@@ -499,6 +521,7 @@ sudo nano /etc/nginx/nginx.conf
 ```
 
 Add inside `http` block:
+
 ```nginx
 client_max_body_size 10M;
 ```
@@ -508,20 +531,26 @@ sudo systemctl restart nginx
 ```
 
 #### ❌ Environment variables not working
+
 **Solutions**:
+
 - Restart your dev server after adding `.env`
 - Ensure variables start with `PUBLIC_` prefix
 - Check `.env` is in the project root
 - Verify `.env` syntax (no spaces around `=`)
 
 #### ❌ n8n not accessible from internet
-**Solutions**: 
+
+**Solutions**:
+
 - Check firewall rules: `sudo ufw allow 5678`
 - If using Nginx, ensure it's running: `sudo systemctl status nginx`
 - Check domain DNS settings point to your server IP
 
 #### ❌ 401 Unauthorized Error
+
 **Solutions**:
+
 - Verify the auth token matches in both n8n and `.env`
 - Check the Authorization header format: `Bearer your-token`
 - Ensure the token has no extra spaces or quotes
@@ -530,9 +559,10 @@ sudo systemctl restart nginx
 
 ## 🎉 Congratulations!
 
-You've successfully set up an automated email signature sending system using n8n! 
+You've successfully set up an automated email signature sending system using n8n!
 
 ### Next Steps:
+
 - [ ] Set up monitoring/alerts for failed executions
 - [ ] Add rate limiting to prevent abuse
 - [ ] Create backup workflows
@@ -540,12 +570,14 @@ You've successfully set up an automated email signature sending system using n8n
 - [ ] Add email tracking/analytics
 
 ### Useful n8n Resources:
+
 - [n8n Documentation](https://docs.n8n.io/)
 - [n8n Community Forum](https://community.n8n.io/)
 - [n8n YouTube Channel](https://www.youtube.com/c/n8n-io)
 - [n8n Templates](https://n8n.io/workflows)
 
 ### Security Best Practices:
+
 - ✅ Always use HTTPS (SSL/TLS)
 - ✅ Use strong authentication tokens
 - ✅ Keep n8n updated to latest version
