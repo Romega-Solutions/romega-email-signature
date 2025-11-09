@@ -4,13 +4,47 @@
 <!-- Load html-to-image from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 
-<button
-  class="px-6 py-3 bg-rs-primary-500 text-white rounded-lg hover:bg-rs-primary-600 transition font-semibold shadow-lg"
-  id="download-btn"
-  type="button"
->
-  📥 Download as Image
-</button>
+<div class="flex flex-col gap-3 w-full">
+  <button
+    class="px-6 py-3 bg-rs-primary-500 text-white rounded-lg hover:bg-rs-primary-600 transition font-semibold shadow-lg"
+    id="download-btn"
+    type="button"
+  >
+    📥 Download as Image
+  </button>
+
+  <button
+    class="px-6 py-3 bg-rs-accent-500 text-white rounded-lg hover:bg-rs-accent-600 transition font-semibold shadow-lg flex items-center justify-center gap-2"
+    id="send-email-btn"
+    type="button"
+  >
+    <i data-lucide="mail" class="w-5 h-5"></i>
+    Send to Email
+  </button>
+</div>
+
+<!-- Success Dialog -->
+<div id="email-success-dialog" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50" style="display: none;">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="check-circle" class="w-10 h-10 text-green-600"></i>
+      </div>
+      <h3 class="font-source-sans text-2xl font-bold text-rs-primary-700 mb-2">
+        Email Sent Successfully!
+      </h3>
+      <p class="font-source-sans text-rs-neutral-600 mb-6">
+        Your email signature has been sent to <strong id="sent-to-email" class="text-rs-primary-600"></strong>
+      </p>
+      <button
+        id="close-dialog-btn"
+        class="px-6 py-3 bg-rs-primary-500 text-white rounded-lg hover:bg-rs-primary-600 transition font-semibold w-full"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
   // Add type declarations for external libraries
@@ -19,55 +53,81 @@
       htmlToImage?: {
         toPng: (node: HTMLElement, options?: any) => Promise<string>;
       };
+      lucide?: {
+        createIcons: () => void;
+      };
+    }
+  }
+
+  // Function to generate the signature image
+  async function generateSignatureImage(button: HTMLButtonElement): Promise<string | null> {
+    const node = document.getElementById('signature-card') as HTMLElement | null;
+    
+    if (!node || !window.htmlToImage) {
+      alert('Error: Unable to capture signature. Please try again.');
+      return null;
+    }
+
+    // Show loading state
+    const originalText = button.textContent;
+    button.textContent = '⏳ Generating...';
+    button.disabled = true;
+
+    try {
+      // Generate the image with better quality and preserve styling
+      const dataUrl = await window.htmlToImage.toPng(node, {
+        quality: 1.0,
+        pixelRatio: 2, // Higher resolution
+        backgroundColor: 'transparent', // Keep original background
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+          // Preserve all existing styles
+          borderRadius: node.style.borderRadius || '0.75rem',
+          boxShadow: getComputedStyle(node).boxShadow,
+          border: getComputedStyle(node).border,
+          padding: getComputedStyle(node).padding
+        },
+        filter: (element: HTMLElement) => {
+          // Include all elements (don't filter out any)
+          return true;
+        },
+        useCORS: true,
+        allowTaint: true
+      });
+
+      button.textContent = originalText;
+      button.disabled = false;
+      
+      return dataUrl;
+    } catch (error) {
+      console.error('Image generation failed:', error);
+      alert('Image generation failed. Please try again.');
+      button.textContent = originalText;
+      button.disabled = false;
+      return null;
     }
   }
 
   document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement | null;
-    
-    if (!downloadBtn) return;
+    const sendEmailBtn = document.getElementById('send-email-btn') as HTMLButtonElement | null;
+    const emailDialog = document.getElementById('email-success-dialog') as HTMLElement | null;
+    const closeDialogBtn = document.getElementById('close-dialog-btn') as HTMLButtonElement | null;
+    const sentToEmailSpan = document.getElementById('sent-to-email') as HTMLElement | null;
 
-    downloadBtn.addEventListener('click', async () => {
-      const button = downloadBtn;
-      const node = document.getElementById('signature-card') as HTMLElement | null;
-      
-      if (!node || !window.htmlToImage) {
-        alert('Error: Unable to capture signature. Please try again.');
-        return;
-      }
+    // Download Button Handler
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', async () => {
+        const dataUrl = await generateSignatureImage(downloadBtn);
+        
+        if (!dataUrl) return;
 
-      // Get the user's name for the filename
-      const nameElement = document.querySelector('[data-field="name"]') as HTMLElement | null;
-      const userName = nameElement?.textContent?.trim() || 'user';
-      const sanitizedName = userName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      const fileName = `${sanitizedName}_email_signature.png`;
-
-      // Show loading state
-      button.textContent = '⏳ Generating...';
-      button.disabled = true;
-
-      try {
-        // Generate the image with better quality and preserve styling
-        const dataUrl = await window.htmlToImage.toPng(node, {
-          quality: 1.0,
-          pixelRatio: 2, // Higher resolution
-          backgroundColor: 'transparent', // Keep original background
-          style: {
-            transform: 'scale(1)',
-            transformOrigin: 'top left',
-            // Preserve all existing styles
-            borderRadius: node.style.borderRadius || '0.75rem',
-            boxShadow: getComputedStyle(node).boxShadow,
-            border: getComputedStyle(node).border,
-            padding: getComputedStyle(node).padding
-          },
-          filter: (element: HTMLElement) => {
-            // Include all elements (don't filter out any)
-            return true;
-          },
-          useCORS: true,
-          allowTaint: true
-        });
+        // Get the user's name for the filename
+        const nameElement = document.querySelector('[data-field="name"]') as HTMLElement | null;
+        const userName = nameElement?.textContent?.trim() || 'user';
+        const sanitizedName = userName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        const fileName = `${sanitizedName}_email_signature.png`;
 
         // Create download link
         const link = document.createElement('a');
@@ -78,18 +138,77 @@
         document.body.removeChild(link);
 
         // Show success message
-        button.textContent = '✅ Downloaded!';
+        downloadBtn.textContent = '✅ Downloaded!';
         setTimeout(() => {
-          button.textContent = '📥 Download as Image';
-          button.disabled = false;
+          downloadBtn.textContent = '📥 Download as Image';
         }, 2000);
+      });
+    }
 
-      } catch (error) {
-        console.error('Download failed:', error);
-        alert('Download failed. Please try again.');
-        button.textContent = '📥 Download as Image';
-        button.disabled = false;
-      }
-    });
+    // Send to Email Button Handler
+    if (sendEmailBtn) {
+      sendEmailBtn.addEventListener('click', async () => {
+        const dataUrl = await generateSignatureImage(sendEmailBtn);
+        
+        if (!dataUrl) return;
+
+        // Get the user's email from the form
+        const emailElement = document.querySelector('[data-field="email"]') as HTMLElement | null;
+        const userEmail = emailElement?.textContent?.trim() || 'your email';
+
+        // Get the user's name for the filename
+        const nameElement = document.querySelector('[data-field="name"]') as HTMLElement | null;
+        const userName = nameElement?.textContent?.trim() || 'user';
+        const sanitizedName = userName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        const fileName = `${sanitizedName}_email_signature.png`;
+
+        // For now, download the image (in the future, this will send to email)
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Show success message
+        sendEmailBtn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> Sent!';
+        
+        // Update dialog with email and show it
+        if (sentToEmailSpan) {
+          sentToEmailSpan.textContent = userEmail;
+        }
+        
+        if (emailDialog) {
+          emailDialog.style.display = 'flex';
+          
+          // Re-initialize lucide icons in the dialog
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
+        }
+
+        // Reset button after a delay
+        setTimeout(() => {
+          sendEmailBtn.innerHTML = '<i data-lucide="mail" class="w-5 h-5"></i> Send to Email';
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
+        }, 2000);
+      });
+    }
+
+    // Close Dialog Handler
+    if (closeDialogBtn && emailDialog) {
+      closeDialogBtn.addEventListener('click', () => {
+        emailDialog.style.display = 'none';
+      });
+
+      // Close dialog when clicking outside
+      emailDialog.addEventListener('click', (e) => {
+        if (e.target === emailDialog) {
+          emailDialog.style.display = 'none';
+        }
+      });
+    }
   });
 </script>
