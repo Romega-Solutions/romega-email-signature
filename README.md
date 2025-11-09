@@ -9,8 +9,11 @@ A modern, responsive email signature generator built with Astro and Tailwind CSS
 - **Live Preview**: See changes in real-time as you type
 - **Responsive Design**: Signature adapts to different screen sizes
 - **Download as Image**: Export your signature as a PNG file
+- **Send to Email**: Automatically send your signature directly to your email inbox
 - **Professional Layout**: Clean, modern design with company branding
 - **Easy Customization**: Simple form-based input for all signature fields
+- **Step-by-Step Guide**: Integrated tutorial with video and written instructions
+- **Team Directory**: Quick access to company contact information
 
 ## 🏗️ Project Structure
 
@@ -56,41 +59,45 @@ All commands are run from the root of the project, from a terminal:
 - **[Astro](https://astro.build)** - Web framework for content-driven websites
 - **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[html-to-image](https://github.com/bubkoo/html-to-image)** - Generate images from DOM nodes
+- **[Lucide Icons](https://lucide.dev)** - Beautiful open-source icon library
+- **[n8n](https://n8n.io)** - Workflow automation for email sending (optional)
 - **TypeScript** - Type-safe JavaScript
 
 ## 🎨 Color Scheme
 
-The project uses the Romega Solutions color system:
+The project uses the Romega Solutions design system defined in `tailwind.config.js`:
 
 ### Primary Colors
 
-- **Primary Blue**: `hsla(209, 100%, 45%, 1)` - Main brand color
-- **Accent Orange**: `hsla(42, 94%, 45%, 1)` - Secondary accent color
+- **Primary**: `#0069D9` - Main brand color (blue)
+- **Accent**: `#D97B00` - Secondary accent color (orange)
+- **Neutral**: Grayscale palette for backgrounds and text
 
-### Usage
+### Custom Prefix
 
-- **Name**: Primary blue (`text-blue-900`)
-- **Title**: Accent orange/yellow (`text-yellow-600`)
-- **Background**: Light blue (`bg-blue-50`)
-- **Borders**: Medium blue (`border-blue-200`)
+All custom colors use the `rs-` prefix:
+
+- `bg-rs-primary-500` - Primary background
+- `text-rs-accent-600` - Accent text
+- `border-rs-neutral-200` - Neutral borders
 
 ## 📝 How to Use
 
-1. **Fill out the form** with your personal/company information:
+1. **Fill out the form** with your information:
 
    - Full Name
    - Job Title
    - Phone Number
    - Email Address
-   - Website URL
-   - Physical Address
-   - Logo URL
 
 2. **See live preview** as you type - the signature updates in real-time
 
-3. **Download your signature** by clicking the "Download as Image" button
+3. **Get your signature** using one of two methods:
 
-4. **Use in your email client** by adding the downloaded image to your email signature
+   - **Download as Image**: Click to download your signature as a PNG file
+   - **Send to Email**: Click to receive your signature directly in your inbox
+
+4. **Set up in Gmail** by following the integrated step-by-step guide with video tutorial
 
 ## 🎯 Customization
 
@@ -103,14 +110,25 @@ The project uses the Romega Solutions color system:
 
 ### Styling Changes
 
-- Modify Tailwind classes in `BaseSignature.astro`
+- Modify Tailwind classes using the `rs-` prefix
 - Update colors in `tailwind.config.js`
 - Add custom CSS in `global.css`
+- Update fonts by modifying the Google Fonts import
 
-### Logo Customization
+### Email Integration Setup
 
-- Replace `/assets/astro.svg` with your company logo
-- Update the default `logoUrl` in `Welcome.astro`
+To enable the "Send to Email" feature with n8n:
+
+1. **Set up n8n workflow** - See `docs/N8N_SETUP_GUIDE.md` for detailed instructions
+2. **Update environment variables**:
+   ```bash
+   # .env
+   PUBLIC_N8N_WEBHOOK_URL=https://n8n.yourdomain.com/webhook/email-signature
+   PUBLIC_N8N_AUTH_TOKEN=your-secret-token-here
+   ```
+3. **Update `DownloadButtons.astro`** with your webhook URL and auth token
+
+For now, the "Send to Email" button downloads the image locally. Follow the n8n setup guide to enable actual email sending.
 
 ## 📱 Responsive Design
 
@@ -133,12 +151,70 @@ The signature is designed to be responsive and will:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👀 Want to learn more?
+## � Email Sending Setup
+
+The application includes a "Send to Email" feature that can be configured with n8n workflow automation.
+
+### Current Functionality (Default)
+
+- Clicking "Send to Email" generates and downloads the signature
+- Shows a success dialog for demonstration purposes
+
+### Production Setup
+
+For automatic email delivery:
+
+1. Install and configure n8n on your server
+2. Create the email workflow (webhook → process image → send email)
+3. Update the webhook URL in `DownloadButtons.astro`
+4. Add authentication token for security
+
+**Full setup guide**: See `docs/N8N_SETUP_GUIDE.md` for step-by-step instructions
+
+## 📱 Responsive Design
+
+The signature is designed to be responsive and will:
+
+- Stack vertically on mobile devices
+- Maintain readability across all screen sizes
+- Provide an optimal viewing experience on desktop and mobile
+- Handle long text with proper word wrapping
+
+## 🚀 Deployment
+
+Build the static site:
+
+```bash
+npm run build
+```
+
+The output will be in the `dist/` directory, ready to deploy to:
+
+- Netlify
+- Vercel
+- GitHub Pages
+- Any static hosting service
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## �👀 Want to learn more?
 
 - [Astro Documentation](https://docs.astro.build)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [html-to-image Documentation](https://github.com/bubkoo/html-to-image)
+- [n8n Documentation](https://docs.n8n.io)
+- [Lucide Icons](https://lucide.dev)
 
 ---
 
-**Built with ❤️ by [Romega Solutions](https://www.romega-solutions.com)**
+**Built with ❤️ by Ken Patrick Garcia for [Romega Solutions](https://www.romega-solutions.com)**
